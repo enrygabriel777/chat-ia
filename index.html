@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#212121">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<title>Gbt2</title>
+<style>
+  :root {
+    --fundo: #212121;
+    --campo: #2f2f2f;
+    --lateral: #171717;
+    --texto: #ececec;
+    --suave: #9b9b9b;
+    --linha: #3a3a3a;
+    --erro: #ff8a7a;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--fundo);
+    color: var(--texto);
+    font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  header {
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    align-items: center;
+    gap: 4px;
+    padding: calc(env(safe-area-inset-top, 0px) + 8px) 10px 8px;
+  }
+  .direita { display: flex; }
+  .titulo { min-width: 0; display: flex; flex-direction: column; align-items: center; }
+  .titulo strong { font-size: 18px; font-weight: 600; }
+  #seletor {
+    background: none;
+    border: 0;
+    color: var(--suave);
+    font: inherit;
+    font-size: 13px;
+    max-width: 100%;
+    text-align: center;
+    cursor: pointer;
+    padding: 2px;
+  }
+  #seletor option { background: var(--campo); color: var(--texto); }
+  .icone {
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--texto);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+  .icone:hover { background: var(--campo); }
+  svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  button:focus-visible, a:focus-visible { outline: 2px solid var(--texto); outline-offset: 2px; }
+
+  #area { flex: 1; overflow-y: auto; padding: 12px 16px 24px; }
+  #conversa {
+    max-width: 44rem;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .vazio { margin-top: 18vh; text-align: center; }
+  .vazio h1 { font-size: 28px; font-weight: 500; margin: 0 0 10px; }
+  .vazio p { margin: 0; color: var(--suave); font-size: 15px; }
+
+  .usuario {
+    align-self: flex-end;
+    max-width: 80%;
+    background: var(--campo);
+    padding: 10px 16px;
+    border-radius: 22px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .ia-wrap { display: flex; flex-direction: column; }
+  .ia { padding: 0 2px; white-space: normal; overflow-wrap: anywhere; }
+  .ia h4 { margin: 14px 0 6px; font-size: 17px; font-weight: 600; }
+  .ia ul { margin: 6px 0; padding-left: 22px; }
+  .ia li { margin: 3px 0; }
+  .ia strong { font-weight: 600; }
+  .ia pre {
+    background: var(--lateral);
+    border-radius: 12px;
+    padding: 12px;
+    overflow-x: auto;
+    font-size: 14px;
+    line-height: 1.45;
+    margin: 10px 0;
+  }
+  .ia code {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    background: var(--lateral);
+    padding: 1px 6px;
+    border-radius: 6px;
+    font-size: .92em;
+  }
+  .ia pre code { background: none; padding: 0; }
+  .ia img { display: none; width: 100%; border-radius: 16px; margin-top: 6px; }
+  .ia img.visivel { display: block; }
+  .acoes-msg { display: flex; gap: 4px; margin-top: 6px; }
+  .mini {
+    background: none;
+    border: 0;
+    color: var(--suave);
+    font: inherit;
+    font-size: 13px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .mini:hover { background: var(--campo); color: var(--texto); }
+  .erro { color: var(--erro); font-size: 15px; }
+  .aviso { color: var(--suave); font-size: 15px; }
+
+  footer { padding: 4px 12px calc(env(safe-area-inset-bottom, 0px) + 12px); }
+  #tamanhos { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding-bottom: 8px; }
+  .chip {
+    border: 1px solid var(--linha);
+    background: none;
+    color: var(--suave);
+    border-radius: 999px;
+    padding: 5px 14px;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .chip[aria-pressed="true"] {
+    background: var(--texto);
+    color: var(--fundo);
+    border-color: var(--texto);
+  }
+  #composer {
+    max-width: 44rem;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    background: var(--campo);
+    border-radius: 28px;
+    padding: 6px 6px 6px 18px;
+  }
+  #entrada {
+    flex: 1;
+    min-width: 0;
+    max-height: 160px;
+    resize: none;
+    border: 0;
+    outline: none;
+    background: none;
+    color: var(--texto);
+    font: inherit;
+    font-size: 16px;
+    line-height: 1.4;
+    padding: 10px 0;
+  }
+  #enviar {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--texto);
+    color: var(--fundo);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+
+  #lateral {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(82vw, 300px);
+    background: var(--lateral);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: calc(env(safe-area-inset-top, 0px) + 14px) 12px calc(env(safe-area-inset-bottom, 0px) + 12px);
+    transform: translateX(-102%);
+    transition: transform .25s ease;
+    z-index: 10;
+  }
+  #lateral.aberta { transform: none; }
+  #fundoLateral {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s;
+    z-index: 9;
+  }
+  #fundoLateral.aberta { opacity: 1; pointer-events: auto; }
+  #lat-nova { width: 100%; }
+  #listaChats { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+  .item-chat { display: flex; align-items: center; gap: 4px; border-radius: 10px; }
+  .item-chat.ativo { background: var(--campo); }
+  .abrir {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+    background: none;
+    border: 0;
+    color: var(--texto);
+    padding: 10px;
+    font: inherit;
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+  }
+  .apagar {
+    background: none;
+    border: 0;
+    color: var(--suave);
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+  }
+  .apagar svg { width: 18px; height: 18px; }
+
+  #voz {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    background: var(--fundo);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    padding: 24px;
+    padding-top: calc(env(safe-area-inset-top, 0px) + 24px);
+  }
+  #voz[hidden] { display: none; }
+  .orbe { width: 180px; height: 180px; border-radius: 50%; background: var(--suave); opacity: .85; }
+  .orbe.ouvindo { animation: respirar 2.4s ease-in-out infinite; }
+  .orbe.pensando { background: var(--linha); animation: respirar .9s ease-in-out infinite; }
+  .orbe.falando { background: var(--texto); animation: pulsar .55s ease-in-out infinite alternate; }
+  @keyframes respirar { 0%, 100% { transform: scale(.92); } 50% { transform: scale(1.03); } }
+  @keyframes pulsar { from { transform: scale(.9); } to { transform: scale(1.14); } }
+  @media (prefers-reduced-motion: reduce) {
+    .orbe { animation: none !important; }
+    #lateral, #fundoLateral { transition: none; }
+  }
+  #estado { color: var(--suave); font-size: 16px; margin: 0; min-height: 1.5em; }
+  .botoes-voz { display: flex; gap: 10px; }
+
+  dialog {
+    position: fixed;
+    inset: auto 0 0 0;
+    margin: 0 auto;
+    width: min(100%, 32rem);
+    max-height: 88dvh;
+    overflow-y: auto;
+    border: 0;
+    border-radius: 20px 20px 0 0;
+    background: var(--campo);
+    color: var(--texto);
+    padding: 22px 20px calc(env(safe-area-inset-bottom, 0px) + 20px);
+  }
+  dialog::backdrop { background: rgba(0, 0, 0, .6); }
+  dialog h2 { font-size: 18px; font-weight: 600; margin: 0 0 16px; }
+  dialog label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+    font-size: 14px;
+    color: var(--suave);
+  }
+  dialog input, dialog select, dialog textarea {
+    font: inherit;
+    font-size: 16px;
+    color: var(--texto);
+    background: var(--fundo);
+    border: 1px solid var(--linha);
+    border-radius: 12px;
+    padding: 10px 12px;
+    width: 100%;
+  }
+  dialog textarea { resize: vertical; }
+  dialog input:focus, dialog select:focus, dialog textarea:focus { outline: none; border-color: var(--texto); }
+  dialog input[type="range"] { padding: 0; accent-color: var(--texto); }
+  .nota { font-size: 13px; color: var(--suave); line-height: 1.45; margin: 0 0 18px; }
+  #listaModelos { display: flex; flex-direction: column; gap: 6px; margin: 0 0 16px; }
+  .item-modelo {
+    text-align: left;
+    background: none;
+    border: 1px solid var(--linha);
+    border-radius: 12px;
+    padding: 10px 12px;
+    color: var(--texto);
+    font: inherit;
+    cursor: pointer;
+  }
+  .item-modelo.ativo { border-color: var(--texto); }
+  .item-modelo strong { display: block; font-size: 15px; font-weight: 600; }
+  .item-modelo span { display: block; font-size: 13px; color: var(--suave); line-height: 1.4; }
+  .botoes { display: flex; justify-content: flex-end; gap: 8px; }
+  .botao {
+    border: 1px solid var(--linha);
+    background: none;
+    color: var(--texto);
+    border-radius: 12px;
+    padding: 9px 16px;
+    font: inherit;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .botao.principal {
+    background: var(--texto);
+    color: var(--fundo);
+    border-color: var(--texto);
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <button class="icone" id="btn-menu" type="button" aria-label="Conversas">
+    <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+  </button>
+  <div class="titulo">
+    <strong>Gbt2</strong>
+    <select id="seletor" aria-label="Modelo"></select>
+  </div>
+  <div class="direita">
+    <button class="icone" id="btn-nova" type="button" aria-label="Nova conversa">
+      <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+    </button>
+    <button class="icone" id="btn-voz" type="button" aria-label="Chamada de voz">
+      <svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>
+    </button>
+    <button class="icone" id="btn-ajustes" type="button" aria-label="Ajustes">
+      <svg viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+    </button>
+  </div>
+</header>
+
+<div id="area">
+  <div id="conversa"></div>
+</div>
+
+<footer>
+  <div id="tamanhos" role="group" aria-label="Opções da resposta">
+    <button class="chip" data-tam="curta" type="button">Curta</button>
+    <button class="chip" data-tam="media" type="button">Média</button>
+    <button class="chip" data-tam="longa" type="button">Longa</button>
+    <button class="chip" id="btn-imagem" type="button" aria-pressed="false">Imagem</button>
+  </div>
+  <form id="composer">
+    <textarea id="entrada" rows="1" placeholder="Pergunte alguma coisa" aria-label="Mensagem"></textarea>
+    <button id="enviar" type="submit" aria-label="Enviar"></button>
+  </form>
+</footer>
+
+<aside id="lateral" aria-label="Conversas">
+  <button class="botao principal" id="lat-nova" type="button">Nova conversa</button>
+  <div id="listaChats"></div>
+</aside>
+<div id="fundoLateral"></div>
+
+<div id="voz" hidden role="dialog" aria-label="Chamada de voz">
+  <div class="orbe" id="orbe"></div>
+  <p id="estado"></p>
+  <div class="botoes-voz">
+    <button class="botao" id="voz-parar" type="button">Parar fala</button>
+    <button class="botao principal" id="voz-encerrar" type="button">Encerrar</button>
+  </div>
+</div>
+
+<dialog id="ajustes">
+  <h2>Ajustes</h2>
+  <label>Provedor
+    <select id="provedor"></select>
+  </label>
+  <div id="listaModelos"></div>
+  <label>Endereço
+    <input id="url" type="url" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false">
+  </label>
+  <label>Modelo (ou digite outro)
+    <input id="modelo" autocapitalize="off" autocorrect="off" spellcheck="false">
+  </label>
+  <label>Chave de API
+    <input id="chave" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
+  </label>
+  <label>Variedade das respostas
+    <input id="criatividade" type="range" min="0" max="1.2" step="0.1">
+  </label>
+  <label>Imagens por dia
+    <input id="limiteImg" type="number" min="1" max="100">
+  </label>
+  <label>Instruções para a IA
+    <textarea id="sistema" rows="3"></textarea>
+  </label>
+  <p class="nota">Tudo fica salvo só neste aparelho. Nenhum provedor garante que o modelo não tenha filtros. Os modelos rodando no seu PC (Ollama) são os que você mais controla. O limite de imagens é do app, e o serviço de imagens aceita um pedido a cada 15 segundos.</p>
+  <div class="botoes">
+    <button class="botao" id="cancelar" type="button">Cancelar</button>
+    <button class="botao principal" id="salvar" type="button">Salvar</button>
+  </div>
+</dialog>
+
+<script>
+const PROVEDORES = {
+  ollama: {
+    nome: "Ollama no PC (mesmo Wi-Fi)",
+    url: "http://192.168.0.10:11434/v1",
+    exigeChave: false,
+    modelos: [
+      { id: "llama3.2", desc: "Roda no seu PC, sem enviar seus textos para outra empresa. Leve, com respostas mais simples." },
+      { id: "qwen2.5:7b", desc: "Bom em vários idiomas e em código. Precisa de um PC com memória razoável." },
+      { id: "mistral", desc: "Leve e rápido, bom para escrever e resumir textos." }
+    ]
+  },
+  groq: {
+    nome: "Groq",
+    url: "https://api.groq.com/openai/v1",
+    exigeChave: true,
+    modelos: [
+      { id: "openai/gpt-oss-120b", desc: "Modelo grande de raciocínio. Ótimo para explicações, textos longos e problemas difíceis. Responde mais devagar." },
+      { id: "openai/gpt-oss-20b", desc: "Versão menor e mais rápida. Boa para conversas do dia a dia." }
+    ]
+  },
+  openrouter: {
+    nome: "OpenRouter",
+    url: "https://openrouter.ai/api/v1",
+    exigeChave: true,
+    modelos: [
+      { id: "meta-llama/llama-3.3-70b-instruct:free", desc: "Modelo grande de código aberto, na versão gratuita. Pode ficar indisponível quando o limite diário acabar." }
+    ]
+  },
+  outro: {
+    nome: "Outro (compatível com OpenAI)",
+    url: "",
+    exigeChave: false,
+    modelos: []
+  }
+};
+
+const TAMANHOS = {
+  curta: { nome: "Curta", max: 1500, instr: "Responda de forma curta e direta, em no máximo três frases, a menos que o usuário peça mais detalhes." },
+  media: { nome: "Média", max: 3000, instr: "Responda de forma equilibrada, em um a três parágrafos, com exemplos quando ajudarem." },
+  longa: { nome: "Longa", max: 8000, instr: "Responda de forma completa e detalhada, explorando o assunto com profundidade, passos, exemplos e observações úteis." }
+};
+
+const PADRAO_SISTEMA = "Você é um assistente útil. Responda sempre em português do Brasil, a menos que o usuário peça outro idioma.";
+const CFG_KEY = "gbt2-config";
+const CHATS_KEY = "gbt2-chats";
+const USO_KEY = "gbt2-uso-imagens";
+const INTERVALO_IMAGEM_MS = 15000;
+const ICONE_ENVIAR = '<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+const ICONE_PARAR = '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none"/></svg>';
+const ICONE_LIXEO = '<svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>';
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+const $ = id => document.getElementById(id);
+const area = $("area");
+const conversa = $("conversa");
+const form = $("composer");
+const entrada = $("entrada");
+const botaoEnviar = $("enviar");
+const seletor = $("seletor");
+const ajustes = $("ajustes");
+const provedor = $("provedor");
+const url = $("url");
+const modelo = $("modelo");
+const chave = $("chave");
+const criatividade = $("criatividade");
+const limiteImg = $("limiteImg");
+const sistema = $("sistema");
+const listaModelos = $("listaModelos");
+const lateral = $("lateral");
+const fundoLateral = $("fundoLateral");
+const listaChats = $("listaChats");
+const btnImagem = $("btn-imagem");
+const voz = $("voz");
+const orbe = $("orbe");
+const estadoEl = $("estado");
+
+let cfg = carregarCfg();
+let chats = lerChats();
+let atualId = chats[0] ? chats[0].id : null;
+let controle = null;
+let modoImagem = false;
+let ultimaImagem = 0;
+let vozAtiva = false;
+let reconhecimento = null;
+let falaId = 0;
+let processandoVoz = false;
+
+function carregarCfg() {
+  const padrao = {
+    provedor: "groq",
+    url: PROVEDORES.groq.url,
+    modelo: PROVEDORES.groq.modelos[0].id,
+    chave: "",
+    tamanho: "media",
+    criatividade: 0.7,
+    limiteImagens: 20,
+    sistema: PADRAO_SISTEMA
+  };
+  try {
+    return { ...padrao, ...JSON.parse(localStorage.getItem(CFG_KEY)) };
+  } catch {
+    return padrao;
+  }
+}
+
+function salvarCfg() {
+  try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch {}
+}
+
+function lerChats() {
+  try {
+    const v = JSON.parse(localStorage.getItem(CHATS_KEY));
+    return Array.isArray(v) ? v : [];
+  } catch {
+    return [];
+  }
+}
+
+function salvarChats() {
+  chats = chats.slice(0, 60);
+  try { localStorage.setItem(CHATS_KEY, JSON.stringify(chats)); } catch {}
+}
+
+function lerUso() {
+  try {
+    const v = JSON.parse(localStorage.getItem(USO_KEY));
+    return v && v.dia ? v : { dia: "", n: 0 };
+  } catch {
+    return { dia: "", n: 0 };
+  }
+}
+
+function salvarUso(uso) {
+  try { localStorage.setItem(USO_KEY, JSON.stringify(uso)); } catch {}
+}
+
+function novoChat() {
+  const c = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    titulo: "Nova conversa",
+    mensagens: []
+  };
+  chats.unshift(c);
+  atualId = c.id;
+  salvarChats();
+}
+
+function chatAtual() {
+  return chats.find(c => c.id === atualId) || chats[0];
+}
+
+function provedorAtual() {
+  return PROVEDORES[cfg.provedor] || PROVEDORES.groq;
+}
+
+function faltaChave() {
+  return provedorAtual().exigeChave && !cfg.chave;
+}
+
+function validar() {
+  if (!cfg.url || !cfg.modelo) return "Defina o endereço e o modelo em Ajustes.";
+  if (faltaChave()) return "Falta a chave de API. Abra Ajustes e cole a sua.";
+  return null;
+}
+
+function esc(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function md(texto) {
+  const blocos = [];
+  let s = esc(texto).replace(/```[\w+-]*\n?([\s\S]*?)```/g, (_, codigo) => {
+    blocos.push("<pre><code>" + codigo.replace(/\n$/, "") + "</code></pre>");
+    return "\u0001" + (blocos.length - 1) + "\u0001";
+  });
+  s = s.replace(/`([^`\n]+)`/g, "<code>$1</code>")
+       .replace(/^#{1,3} (.+)$/gm, "<h4>$1</h4>")
+       .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")
+       .replace(/(^|[^*\w])\*([^*\n]+)\*/g, "$1<em>$2</em>")
+       .replace(/^\s*(?:[-*]|\d+\.) (.+)$/gm, "<li>$1</li>")
+       .replace(/(?:<li>.*<\/li>\n?)+/g, m => "<ul>" + m + "</ul>")
+       .replace(/\n/g, "<br>");
+  return s.replace(/\u0001(\d+)\u0001/g, (_, i) => blocos[i]);
+}
+
+function paraFala(t) {
+  return t
+    .replace(/```[\s\S]*?```/g, " bloco de código. ")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\*\*|__|[*#>_]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function rolar(forcar = false) {
+  const perto = area.scrollHeight - area.scrollTop - area.clientHeight < 120;
+  if (forcar || perto) area.scrollTop = area.scrollHeight;
+}
+
+function ajustarAltura() {
+  entrada.style.height = "auto";
+  entrada.style.height = Math.min(entrada.scrollHeight, 160) + "px";
+}
+
+function mini(texto) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "mini";
+  b.textContent = texto;
+  return b;
+}
+
+function acoesMsg(wrap, texto, ultima) {
+  const barra = document.createElement("div");
+  barra.className = "acoes-msg";
+  const copiar = mini("Copiar");
+  copiar.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(texto);
+      copiar.textContent = "Copiado";
+      setTimeout(() => { copiar.textContent = "Copiar"; }, 1500);
+    } catch {}
+  });
+  barra.appendChild(copiar);
+  if (ultima) {
+    const nova = mini("Gerar de novo");
+    nova.addEventListener("click", regerar);
+    barra.appendChild(nova);
+  }
+  wrap.appendChild(barra);
+}
+
+function criarWrap() {
+  const wrap = document.createElement("div");
+  wrap.className = "ia-wrap";
+  const bolha = document.createElement("div");
+  bolha.className = "msg ia";
+  wrap.appendChild(bolha);
+  conversa.appendChild(wrap);
+  return wrap;
+}
+
+function mostrarMsg(m, ultima) {
+  if (m.role === "user") {
+    const d = document.createElement("div");
+    d.className = "usuario";
+    d.textContent = m.tipo === "imagem" ? "Imagem: " + m.content : m.content;
+    conversa.appendChild(d);
+    return;
+  }
+  if (m.tipo === "imagem") return mostrarImagem(m);
+  const wrap = criarWrap();
+  wrap.firstChild.innerHTML = md(m.content);
+  acoesMsg(wrap, m.content, ultima);
+}
+
+function mostrarImagem(m) {
+  const wrap = criarWrap();
+  const bolha = wrap.firstChild;
+  const aviso = document.createElement("p");
+  aviso.className = "aviso";
+  aviso.textContent = "Gerando imagem… pode levar alguns segundos.";
+  const img = new Image();
+  img.alt = m.content;
+  img.onload = () => { aviso.remove(); img.classList.add("visivel"); rolar(); };
+  img.onerror = () => {
+    wrap.remove();
+    chats.forEach(ch => { ch.mensagens = ch.mensagens.filter(x => x !== m); });
+    salvarChats();
+    mostrarErro("Não consegui gerar esta imagem. O serviço pode estar ocupado. Espere alguns segundos e tente de novo.");
+  };
+  img.src = m.url;
+  bolha.append(aviso, img);
+  const link = document.createElement("a");
+  link.className = "mini";
+  link.href = m.url;
+  link.target = "_blank";
+  link.rel = "noopener";
+  link.textContent = "Abrir imagem";
+  const barra = document.createElement("div");
+  barra.className = "acoes-msg";
+  barra.appendChild(link);
+  wrap.appendChild(barra);
+}
+
+function mostrarErro(texto, tipo = "erro") {
+  const d = document.createElement("div");
+  d.className = tipo;
+  d.textContent = texto;
+  conversa.appendChild(d);
+  rolar(true);
+}
+
+function setBotao(gerando) {
+  botaoEnviar.innerHTML = gerando ? ICONE_PARAR : ICONE_ENVIAR;
+  botaoEnviar.setAttribute("aria-label", gerando ? "Parar" : "Enviar");
+}
+
+function mensagemDeErro(err) {
+  if (err instanceof TypeError) {
+    return "Não consegui falar com o servidor. Confira o endereço e a conexão. Se for o Ollama, confira se ele está aberto e acessível pelo Wi-Fi.";
+  }
+  return err.message;
+}
+
+function renderizarChat() {
+  const c = chatAtual();
+  conversa.replaceChildren();
+  if (!c.mensagens.length) {
+    const v = document.createElement("div");
+    v.className = "vazio";
+    v.innerHTML = "<h1>No que posso ajudar?</h1><p></p>";
+    v.querySelector("p").textContent = faltaChave()
+      ? "Abra Ajustes e cole sua chave de API para começar."
+      : "Digite sua mensagem abaixo.";
+    conversa.appendChild(v);
+  }
+  c.mensagens.forEach((m, i) => mostrarMsg(m, i === c.mensagens.length - 1));
+  atualizarTopo();
+  renderLista();
+  rolar(true);
+}
+
+function atualizarTopo() {
+  const ids = provedorAtual().modelos.map(m => m.id);
+  const lista = [...new Set([...ids, cfg.modelo].filter(Boolean))];
+  seletor.replaceChildren(...lista.map(m => new Option(m, m)));
+  seletor.value = cfg.modelo;
+  document.querySelectorAll("[data-tam]").forEach(b => {
+    b.setAttribute("aria-pressed", String(b.dataset.tam === cfg.tamanho));
+  });
+}
+
+function renderLista() {
+  listaChats.replaceChildren();
+  chats.forEach(c => {
+    const linha = document.createElement("div");
+    linha.className = "item-chat" + (c.id === atualId ? " ativo" : "");
+    const abrir = document.createElement("button");
+    abrir.type = "button";
+    abrir.className = "abrir";
+    abrir.textContent = c.titulo;
+    abrir.addEventListener("click", () => abrirChat(c.id));
+    const apagar = document.createElement("button");
+    apagar.type = "button";
+    apagar.className = "apagar";
+    apagar.setAttribute("aria-label", "Apagar conversa");
+    apagar.innerHTML = ICONE_LIXEO;
+    apagar.addEventListener("click", () => apagarChat(c.id));
+    linha.append(abrir, apagar);
+    listaChats.appendChild(linha);
+  });
+}
+
+function abrirChat(id) {
+  if (controle) return;
+  atualId = id;
+  renderizarChat();
+  fecharMenu();
+}
+
+function apagarChat(id) {
+  if (controle) return;
+  if (!confirm("Apagar esta conversa?")) return;
+  chats = chats.filter(c => c.id !== id);
+  if (!chats.length) novoChat();
+  else if (atualId === id) atualId = chats[0].id;
+  salvarChats();
+  renderizarChat();
+}
+
+function novaConversa() {
+  if (controle) return;
+  if (chatAtual().mensagens.length) novoChat();
+  renderizarChat();
+  fecharMenu();
+}
+
+function abrirMenu() {
+  lateral.classList.add("aberta");
+  fundoLateral.classList.add("aberta");
+}
+
+function fecharMenu() {
+  lateral.classList.remove("aberta");
+  fundoLateral.classList.remove("aberta");
+}
+
+function renderListaModelos(pid) {
+  listaModelos.replaceChildren();
+  const p = PROVEDORES[pid];
+  if (!p || !p.modelos.length) return;
+  p.modelos.forEach(m => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "item-modelo" + (m.id === modelo.value ? " ativo" : "");
+    const titulo = document.createElement("strong");
+    titulo.textContent = m.id;
+    const desc = document.createElement("span");
+    desc.textContent = m.desc;
+    b.append(titulo, desc);
+    b.addEventListener("click", () => {
+      modelo.value = m.id;
+      renderListaModelos(pid);
+    });
+    listaModelos.appendChild(b);
+  });
+}
+
+function abrirAjustes() {
+  provedor.value = cfg.provedor;
+  url.value = cfg.url;
+  modelo.value = cfg.modelo;
+  chave.value = cfg.chave;
+  criatividade.value = cfg.criatividade;
+  limiteImg.value = cfg.limiteImagens;
+  sistema.value = cfg.sistema;
+  renderListaModelos(cfg.provedor);
+  ajustes.showModal();
+}
+
+provedor.addEventListener("change", () => {
+  const p = PROVEDORES[provedor.value];
+  if (provedor.value !== "outro") {
+    url.value = p.url;
+    modelo.value = p.modelos[0] ? p.modelos[0].id : "";
+  }
+  renderListaModelos(provedor.value);
+});
+
+function salvarAjustes() {
+  cfg = {
+    ...cfg,
+    provedor: provedor.value,
+    url: url.value.trim(),
+    modelo: modelo.value.trim(),
+    chave: chave.value.trim(),
+    criatividade: Number(criatividade.value),
+    limiteImagens: Math.max(1, Math.min(100, Number(limiteImg.value) || 20)),
+    sistema: sistema.value.trim() || PADRAO_SISTEMA
+  };
+  salvarCfg();
+  ajustes.close();
+  renderizarChat();
+}
+
+async function enviarMensagem(e) {
+  e.preventDefault();
+  if (controle) { controle.abort(); return; }
+  const texto = entrada.value.trim();
+  if (!texto) return;
+
+  if (modoImagem) {
+    if (gerarImagem(texto)) {
+      entrada.value = "";
+      ajustarAltura();
+    }
+    return;
+  }
+
+  const erro = validar();
+  if (erro) { mostrarErro(erro); return; }
+  entrada.value = "";
+  ajustarAltura();
+  await enviarTexto(texto);
+}
+
+async function enviarTexto(texto) {
+  const erro = validar();
+  if (erro) { mostrarErro(erro); return ""; }
+  const c = chatAtual();
+  if (c.titulo === "Nova conversa") c.titulo = texto.slice(0, 40);
+  c.mensagens.push({ role: "user", content: texto });
+  salvarChats();
+  renderizarChat();
+  return await gerar();
+}
+
+async function gerar() {
+  const c = chatAtual();
+  controle = new AbortController();
+  setBotao(true);
+
+  const wrap = criarWrap();
+  const bolha = wrap.firstChild;
+  bolha.textContent = "…";
+  rolar(true);
+
+  let textoIA = "";
+  let falha = null;
+
+  try {
+    const sistemaTxt = [cfg.sistema, TAMANHOS[cfg.tamanho].instr].filter(Boolean).join("\n\n");
+    const historico = c.mensagens
+      .filter(m => !m.tipo)
+      .map(m => ({ role: m.role, content: m.content }));
+    const headers = { "Content-Type": "application/json" };
+    if (cfg.chave) headers.Authorization = "Bearer " + cfg.chave;
+
+    const res = await fetch(cfg.url.replace(/\/+$/, "") + "/chat/completions", {
+      method: "POST",
+      headers,
+      signal: controle.signal,
+      body: JSON.stringify({
+        model: cfg.modelo,
+        messages: [{ role: "system", content: sistemaTxt }, ...historico],
+        stream: true,
+        max_tokens: TAMANHOS[cfg.tamanho].max,
+        temperature: cfg.criatividade
+      })
+    });
+
+    if (!res.ok) {
+      const detalhe = (await res.text()).slice(0, 200);
+      throw new Error(`O servidor respondeu com erro ${res.status}. ${detalhe}`);
+    }
+
+    const leitor = res.body.getReader();
+    const decodificador = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await leitor.read();
+      if (done) break;
+      buffer += decodificador.decode(value, { stream: true });
+      const linhas = buffer.split("\n");
+      buffer = linhas.pop();
+
+      for (const linha of linhas) {
+        const l = linha.trim();
+        if (!l.startsWith("data:")) continue;
+        const dados = l.slice(5).trim();
+        if (dados === "[DONE]") continue;
+
+        let pedaco = "";
+        try {
+          pedaco = JSON.parse(dados).choices?.[0]?.delta?.content || "";
+        } catch {
+          continue;
+        }
+        if (pedaco) {
+          textoIA += pedaco;
+          bolha.innerHTML = md(textoIA);
+          rolar();
+        }
+      }
+    }
+  } catch (err) {
+    falha = err;
+  }
+
+  controle = null;
+  setBotao(false);
+  const interrompido = falha && falha.name === "AbortError";
+
+  if (textoIA) {
+    c.mensagens.push({ role: "assistant", content: textoIA });
+    salvarChats();
+    acoesMsg(wrap, textoIA, true);
+    if (falha && !interrompido) mostrarErro(mensagemDeErro(falha));
+  } else {
+    wrap.remove();
+    if (interrompido) mostrarErro("Resposta interrompida.", "aviso");
+    else if (falha) mostrarErro(mensagemDeErro(falha));
+    else mostrarErro("O modelo não devolveu texto.", "aviso");
+  }
+  rolar();
+  return textoIA;
+}
+
+function gerarImagem(prompt) {
+  const hoje = (() => {
+    const d = new Date();
+    return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+  })();
+  let uso = lerUso();
+  if (uso.dia !== hoje) uso = { dia: hoje, n: 0 };
+
+  if (uso.n >= cfg.limiteImagens) {
+    mostrarErro(`Você atingiu o limite de ${cfg.limiteImagens} imagens hoje. Aumente o limite em Ajustes ou tente amanhã.`, "aviso");
+    return false;
+  }
+  const faltam = INTERVALO_IMAGEM_MS - (Date.now() - ultimaImagem);
+  if (faltam > 0) {
+    mostrarErro(`Espere ${Math.ceil(faltam / 1000)} segundos antes de pedir outra imagem.`, "aviso");
+    return false;
+  }
+
+  uso.n++;
+  salvarUso(uso);
+  ultimaImagem = Date.now();
+
+  const c = chatAtual();
+  if (c.titulo === "Nova conversa") c.titulo = prompt.slice(0, 40);
+  const seed = Math.floor(Math.random() * 1000000);
+  const imagemUrl = "https://image.pollinations.ai/prompt/" + encodeURIComponent(prompt) +
+    "?width=1024&height=1024&model=flux&nologo=true&seed=" + seed;
+  c.mensagens.push({ role: "user", content: prompt, tipo: "imagem" });
+  c.mensagens.push({ role: "assistant", content: prompt, tipo: "imagem", url: imagemUrl });
+  salvarChats();
+  renderizarChat();
+  return true;
+}
+
+function regerar() {
+  if (controle) return;
+  const c = chatAtual();
+  const ultimo = c.mensagens[c.mensagens.length - 1];
+  if (!ultimo || ultimo.role !== "assistant" || ultimo.tipo) return;
+  c.mensagens.pop();
+  salvarChats();
+  renderizarChat();
+  gerar();
+}
+
+function setEstado(texto, classe) {
+  estadoEl.textContent = texto;
+  orbe.className = "orbe" + (classe ? " " + classe : "");
+}
+
+function abrirVoz() {
+  if (!SR) {
+    mostrarErro("Este navegador não tem reconhecimento de voz. Use o Chrome no Android.");
+    return;
+  }
+  if (!("speechSynthesis" in window)) {
+    mostrarErro("Este navegador não consegue falar em voz alta.");
+    return;
+  }
+  const erro = validar();
+  if (erro) { mostrarErro(erro); return; }
+  vozAtiva = true;
+  voz.hidden = false;
+  ouvir();
+}
+
+function encerrarVoz() {
+  vozAtiva = false;
+  falaId++;
+  try { if (reconhecimento) reconhecimento.abort(); } catch {}
+  try { speechSynthesis.cancel(); } catch {}
+  if (controle) controle.abort();
+  voz.hidden = true;
+  setEstado("", "");
+}
+
+function pararFala() {
+  falaId++;
+  try { speechSynthesis.cancel(); } catch {}
+  if (vozAtiva && !processandoVoz) ouvir();
+}
+
+function ouvir() {
+  if (!vozAtiva) return;
+  setEstado("Ouvindo…", "ouvindo");
+  reconhecimento = new SR();
+  reconhecimento.lang = "pt-BR";
+  reconhecimento.interimResults = false;
+  reconhecimento.maxAlternatives = 1;
+  let recebeu = false;
+  let fatal = false;
+
+  reconhecimento.onresult = e => {
+    recebeu = true;
+    const texto = e.results[0][0].transcript.trim();
+    if (texto) enviarVoz(texto);
+    else if (vozAtiva) ouvir();
+  };
+  reconhecimento.onerror = e => {
+    if (e.error === "no-speech" || e.error === "aborted") return;
+    fatal = true;
+    const msgs = {
+      "not-allowed": "Permita o uso do microfone no navegador para continuar.",
+      "service-not-allowed": "Permita o uso do microfone no navegador para continuar.",
+      "network": "Sem conexão para reconhecer a voz. Confira a internet."
+    };
+    setEstado(msgs[e.error] || "Não consegui ouvir. Toque em Encerrar e tente de novo.", "");
+  };
+  reconhecimento.onend = () => {
+    if (vozAtiva && !recebeu && !fatal && !processandoVoz) setTimeout(ouvir, 300);
+  };
+  try {
+    reconhecimento.start();
+  } catch {
+    setEstado("Não consegui iniciar o microfone.", "");
+  }
+}
+
+async function enviarVoz(texto) {
+  processandoVoz = true;
+  setEstado("Pensando…", "pensando");
+  const resposta = await enviarTexto(texto);
+  processandoVoz = false;
+  if (!vozAtiva) return;
+  if (resposta) falar(resposta);
+  else setEstado("Não consegui responder. Veja o erro no chat.", "");
+}
+
+function falar(texto) {
+  const id = ++falaId;
+  const partes = paraFala(texto).split(/(?<=[.!?])\s+/).filter(Boolean);
+  const voices = speechSynthesis.getVoices();
+  const vozPt = voices.find(v => v.lang && v.lang.toLowerCase().startsWith("pt")) || null;
+  let i = 0;
+
+  const proxima = () => {
+    if (id !== falaId) return;
+    if (i >= partes.length) {
+      if (vozAtiva) ouvir();
+      else setEstado("", "");
+      return;
+    }
+    const u = new SpeechSynthesisUtterance(partes[i++]);
+    u.lang = "pt-BR";
+    if (vozPt) u.voice = vozPt;
+    u.onstart = () => setEstado("Falando…", "falando");
+    u.onend = proxima;
+    u.onerror = proxima;
+    speechSynthesis.speak(u);
+  };
+  proxima();
+}
+
+form.addEventListener("submit", enviarMensagem);
+entrada.addEventListener("input", ajustarAltura);
+entrada.addEventListener("keydown", e => {
+  // No celular, Enter quebra linha. Em computador com mouse, Enter envia.
+  if (e.key === "Enter" && !e.shiftKey && !controle && matchMedia("(pointer: fine)").matches) {
+    e.preventDefault();
+    form.requestSubmit();
+  }
+});
+
+seletor.addEventListener("change", () => {
+  cfg.modelo = seletor.value;
+  salvarCfg();
+});
+document.querySelectorAll("[data-tam]").forEach(b => {
+  b.addEventListener("click", () => {
+    cfg.tamanho = b.dataset.tam;
+    salvarCfg();
+    atualizarTopo();
+  });
+});
+btnImagem.addEventListener("click", () => {
+  modoImagem = !modoImagem;
+  btnImagem.setAttribute("aria-pressed", String(modoImagem));
+  entrada.placeholder = modoImagem ? "Descreva a imagem que você quer" : "Pergunte alguma coisa";
+  entrada.focus();
+});
+
+for (const [id, p] of Object.entries(PROVEDORES)) {
+  provedor.add(new Option(p.nome, id));
+}
+
+$("btn-menu").addEventListener("click", abrirMenu);
+fundoLateral.addEventListener("click", fecharMenu);
+$("btn-nova").addEventListener("click", novaConversa);
+$("lat-nova").addEventListener("click", novaConversa);
+$("btn-voz").addEventListener("click", abrirVoz);
+$("voz-parar").addEventListener("click", pararFala);
+$("voz-encerrar").addEventListener("click", encerrarVoz);
+$("btn-ajustes").addEventListener("click", abrirAjustes);
+$("salvar").addEventListener("click", salvarAjustes);
+$("cancelar").addEventListener("click", () => ajustes.close());
+
+if (!chats.length) novoChat();
+botaoEnviar.innerHTML = ICONE_ENVIAR;
+renderizarChat();
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+</script>
+</body>
+</html>
