@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#15171B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Chat</title>
+<style>
+  :root {
+    --fundo: #15171B;
+    --painel: #1D2026;
+    --usuario: #252A33;
+    --texto: #ECE7DB;
+    --suave: #8D929C;
+    --linha: #2B3039;
+    --acento: #E3A848;
+    --erro: #E98A72;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--fundo);
+    color: var(--texto);
+    font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 10px;
+    border-bottom: 1px solid var(--linha);
+  }
+  #modelo-atual {
+    font-size: 14px;
+    color: var(--suave);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .acoes { display: flex; gap: 8px; flex-shrink: 0; }
+  .ghost {
+    background: none;
+    color: var(--texto);
+    border: 1px solid var(--linha);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  #area { flex: 1; overflow-y: auto; padding: 20px 16px; }
+  #conversa {
+    max-width: 40rem;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+  .vazio { margin: 26vh 0 0; text-align: center; color: var(--suave); font-size: 15px; }
+  .msg { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .msg.usuario {
+    align-self: flex-end;
+    max-width: 85%;
+    background: var(--usuario);
+    padding: 10px 14px;
+    border-radius: 16px 16px 4px 16px;
+  }
+  .msg.ia {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: 17px;
+    line-height: 1.65;
+    padding: 0 2px;
+  }
+  .msg.erro { color: var(--erro); font-size: 15px; }
+  .msg.aviso { color: var(--suave); font-size: 15px; }
+  footer {
+    border-top: 1px solid var(--linha);
+    padding: 10px 12px calc(env(safe-area-inset-bottom, 0px) + 10px);
+  }
+  #composer {
+    max-width: 40rem;
+    margin: 0 auto;
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  #entrada {
+    flex: 1;
+    min-width: 0;
+    resize: none;
+    max-height: 160px;
+    background: var(--painel);
+    color: var(--texto);
+    border: 1px solid var(--linha);
+    border-radius: 14px;
+    padding: 11px 14px;
+    font: inherit;
+    font-size: 16px;
+    line-height: 1.4;
+    outline: none;
+  }
+  #entrada:focus { border-color: var(--acento); }
+  #enviar {
+    height: 44px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 14px;
+    background: var(--acento);
+    color: #1A1407;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  #enviar.parar {
+    background: none;
+    color: var(--texto);
+    border: 1px solid var(--linha);
+    font-weight: 500;
+  }
+  button:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
+  dialog {
+    position: fixed;
+    inset: auto 0 0 0;
+    margin: 0 auto;
+    width: min(100%, 32rem);
+    max-height: 88vh;
+    max-height: 88dvh;
+    overflow-y: auto;
+    border: 0;
+    border-radius: 18px 18px 0 0;
+    background: var(--painel);
+    color: var(--texto);
+    padding: 22px 20px calc(env(safe-area-inset-bottom, 0px) + 20px);
+  }
+  dialog::backdrop { background: rgba(0, 0, 0, .55); }
+  dialog h2 { font-size: 18px; font-weight: 600; margin: 0 0 16px; }
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+    font-size: 14px;
+    color: var(--suave);
+  }
+  input, select {
+    font: inherit;
+    font-size: 16px;
+    color: var(--texto);
+    background: var(--fundo);
+    border: 1px solid var(--linha);
+    border-radius: 10px;
+    padding: 10px 12px;
+    width: 100%;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--acento); }
+  .nota { font-size: 13px; color: var(--suave); line-height: 1.45; margin: 0 0 18px; }
+  #salvar {
+    background: var(--acento);
+    color: #1A1407;
+    border: 0;
+    border-radius: 10px;
+    padding: 9px 18px;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span id="modelo-atual"></span>
+  <div class="acoes">
+    <button class="ghost" id="btn-nova" type="button">Nova conversa</button>
+    <button class="ghost" id="btn-ajustes" type="button">Ajustes</button>
+  </div>
+</header>
+
+<div id="area">
+  <div id="conversa">
+    <p class="vazio" id="vazio"></p>
+  </div>
+</div>
+
+<footer>
+  <form id="composer">
+    <textarea id="entrada" rows="1" placeholder="Mensagem"></textarea>
+    <button id="enviar" type="submit">Enviar</button>
+  </form>
+</footer>
+
+<dialog id="ajustes">
+  <h2>Ajustes</h2>
+  <label>Provedor
+    <select id="provedor"></select>
+  </label>
+  <label>Endereço
+    <input id="url" type="url" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false">
+  </label>
+  <label>Modelo
+    <input id="modelo" autocapitalize="off" autocorrect="off" spellcheck="false">
+  </label>
+  <label>Chave de API
+    <input id="chave" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
+  </label>
+  <p class="nota">Fica salva só neste aparelho. O Ollama não usa chave. Groq e OpenRouter exigem chave.</p>
+  <div style="display:flex; justify-content:flex-end; gap:8px;">
+    <button class="ghost" id="cancelar" type="button">Cancelar</button>
+    <button id="salvar" type="button">Salvar</button>
+  </div>
+</dialog>
+
+<script>
+const PROVEDORES = {
+  ollama: {
+    nome: "Ollama no PC (mesmo Wi-Fi)",
+    url: "http://192.168.0.10:11434/v1",
+    modelo: "llama3.2",
+    exigeChave: false
+  },
+  groq: {
+    nome: "Groq",
+    url: "https://api.groq.com/openai/v1",
+    modelo: "llama-3.3-70b-versatile",
+    exigeChave: true
+  },
+  openrouter: {
+    nome: "OpenRouter",
+    url: "https://openrouter.ai/api/v1",
+    modelo: "meta-llama/llama-3.3-70b-instruct:free",
+    exigeChave: true
+  },
+  outro: {
+    nome: "Outro (compatível com OpenAI)",
+    url: "",
+    modelo: "",
+    exigeChave: false
+  }
+};
+
+const CHAVE_CONFIG = "chat-ia-config";
+const $ = id => document.getElementById(id);
+const area = $("area");
+const conversa = $("conversa");
+const vazio = $("vazio");
+const form = $("composer");
+const entrada = $("entrada");
+const botaoEnviar = $("enviar");
+const modeloAtual = $("modelo-atual");
+const ajustes = $("ajustes");
+const provedor = $("provedor");
+const url = $("url");
+const modelo = $("modelo");
+const chave = $("chave");
+
+for (const [id, p] of Object.entries(PROVEDORES)) {
+  provedor.add(new Option(p.nome, id));
+}
+
+let cfg = carregarConfig();
+let historico = [];
+let controle = null;
+
+function carregarConfig() {
+  const padrao = { provedor: "groq", url: PROVEDORES.groq.url, modelo: PROVEDORES.groq.modelo, chave: "" };
+  try {
+    return { ...padrao, ...JSON.parse(localStorage.getItem(CHAVE_CONFIG)) };
+  } catch {
+    return padrao;
+  }
+}
+
+function salvarConfig() {
+  try { localStorage.setItem(CHAVE_CONFIG, JSON.stringify(cfg)); } catch {}
+}
+
+function atualizarTela() {
+  modeloAtual.textContent = cfg.modelo || "Sem modelo definido";
+  const faltaChave = PROVEDORES[cfg.provedor]?.exigeChave && !cfg.chave;
+  vazio.textContent = faltaChave
+    ? "Abra Ajustes e cole sua chave de API para começar."
+    : "Escreva uma mensagem para começar.";
+}
+
+function abrirAjustes() {
+  provedor.value = cfg.provedor;
+  url.value = cfg.url;
+  modelo.value = cfg.modelo;
+  chave.value = cfg.chave;
+  ajustes.showModal();
+}
+
+provedor.addEventListener("change", () => {
+  if (provedor.value !== "outro") {
+    url.value = PROVEDORES[provedor.value].url;
+    modelo.value = PROVEDORES[provedor.value].modelo;
+  }
+});
+
+function salvarAjustes() {
+  cfg = {
+    provedor: provedor.value,
+    url: url.value.trim(),
+    modelo: modelo.value.trim(),
+    chave: chave.value.trim()
+  };
+  salvarConfig();
+  atualizarTela();
+  ajustes.close();
+}
+
+function novaConversa() {
+  if (historico.length && !confirm("Apagar esta conversa?")) return;
+  historico = [];
+  conversa.querySelectorAll(".msg").forEach(m => m.remove());
+  vazio.hidden = false;
+}
+
+function adicionar(tipo, texto) {
+  vazio.hidden = true;
+  const div = document.createElement("div");
+  div.className = "msg " + tipo;
+  div.textContent = texto;
+  conversa.appendChild(div);
+  return div;
+}
+
+function rolar(forcar = false) {
+  const perto = area.scrollHeight - area.scrollTop - area.clientHeight < 120;
+  if (forcar || perto) area.scrollTop = area.scrollHeight;
+}
+
+function ajustarAltura() {
+  entrada.style.height = "auto";
+  entrada.style.height = Math.min(entrada.scrollHeight, 160) + "px";
+}
+
+function mensagemDeErro(err) {
+  if (err instanceof TypeError) {
+    return "Não consegui falar com o servidor. Confira o endereço e a conexão. Se for o Ollama, confira se ele está aberto e acessível pelo Wi-Fi.";
+  }
+  return err.message;
+}
+
+async function enviarMensagem(e) {
+  e.preventDefault();
+  if (controle) { controle.abort(); return; }
+
+  const texto = entrada.value.trim();
+  if (!texto) return;
+  if (!cfg.url || !cfg.modelo) {
+    adicionar("erro", "Defina o endereço e o modelo em Ajustes.");
+    return;
+  }
+  if (PROVEDORES[cfg.provedor]?.exigeChave && !cfg.chave) {
+    adicionar("erro", "Falta a chave de API. Abra Ajustes e cole a sua.");
+    return;
+  }
+
+  entrada.value = "";
+  ajustarAltura();
+  historico.push({ role: "user", content: texto });
+  adicionar("usuario", texto);
+  const resposta = adicionar("ia", "…");
+  rolar(true);
+
+  controle = new AbortController();
+  botaoEnviar.textContent = "Parar";
+  botaoEnviar.classList.add("parar");
+
+  let textoIA = "";
+  let falha = null;
+
+  try {
+    const headers = { "Content-Type": "application/json" };
+    if (cfg.chave) headers.Authorization = "Bearer " + cfg.chave;
+
+    const res = await fetch(cfg.url.replace(/\/+$/, "") + "/chat/completions", {
+      method: "POST",
+      headers,
+      signal: controle.signal,
+      body: JSON.stringify({ model: cfg.modelo, messages: historico, stream: true })
+    });
+
+    if (!res.ok) {
+      const detalhe = (await res.text()).slice(0, 200);
+      throw new Error(`O servidor respondeu com erro ${res.status}. ${detalhe}`);
+    }
+
+    const leitor = res.body.getReader();
+    const decodificador = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await leitor.read();
+      if (done) break;
+      buffer += decodificador.decode(value, { stream: true });
+      const linhas = buffer.split("\n");
+      buffer = linhas.pop();
+
+      for (const linha of linhas) {
+        const l = linha.trim();
+        if (!l.startsWith("data:")) continue;
+        const dados = l.slice(5).trim();
+        if (dados === "[DONE]") continue;
+
+        let pedaco = "";
+        try {
+          pedaco = JSON.parse(dados).choices?.[0]?.delta?.content || "";
+        } catch {
+          continue;
+        }
+        if (pedaco) {
+          textoIA += pedaco;
+          resposta.textContent = textoIA;
+          rolar();
+        }
+      }
+    }
+  } catch (err) {
+    falha = err;
+  }
+
+  controle = null;
+  botaoEnviar.textContent = "Enviar";
+  botaoEnviar.classList.remove("parar");
+
+  const interrompido = falha && falha.name === "AbortError";
+
+  if (textoIA) {
+    historico.push({ role: "assistant", content: textoIA });
+    if (falha && !interrompido) adicionar("erro", mensagemDeErro(falha));
+  } else {
+    resposta.className = falha && !interrompido ? "msg erro" : "msg aviso";
+    resposta.textContent = interrompido
+      ? "Resposta interrompida."
+      : falha
+        ? mensagemDeErro(falha)
+        : "O modelo não devolveu texto.";
+  }
+  rolar();
+}
+
+form.addEventListener("submit", enviarMensagem);
+entrada.addEventListener("input", ajustarAltura);
+entrada.addEventListener("keydown", e => {
+  // No celular, Enter quebra linha. Em computador com mouse, Enter envia.
+  if (e.key === "Enter" && !e.shiftKey && !controle && matchMedia("(pointer: fine)").matches) {
+    e.preventDefault();
+    form.requestSubmit();
+  }
+});
+$("btn-nova").addEventListener("click", novaConversa);
+$("btn-ajustes").addEventListener("click", abrirAjustes);
+$("salvar").addEventListener("click", salvarAjustes);
+$("cancelar").addEventListener("click", () => ajustes.close());
+
+atualizarTela();
+</script>
+</body>
+</html>
